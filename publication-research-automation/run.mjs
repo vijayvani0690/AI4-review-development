@@ -2,7 +2,10 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import process from "node:process";
 import { fileURLToPath } from "node:url";
-import { FileBlob, SpreadsheetFile, Workbook } from "@oai/artifact-tool";
+import {
+  buildWorkbookStandalone,
+  readPublicationSourcesStandalone,
+} from "./standalone_workbook.mjs";
 
 const scriptDirectory = path.dirname(fileURLToPath(import.meta.url));
 const apiUrl = "https://api.openai.com/v1/responses";
@@ -148,69 +151,6 @@ function normalizeUrl(value) {
   } catch {
     return asText(value);
   }
-}
-
-async function readPublicationSources(workbookPath) {
-  const workbook = await SpreadsheetFile.importXlsx(
-    await FileBlob.load(workbookPath),
-  );
-  const sheet = workbook.worksheets.getItemAt(0);
-  const used = sheet.getUsedRange(true);
-  const values = used?.values || [];
-  if (values.length < 2) {
-    throw new Error("The input workbook does not contain publication rows.");
-  }
-
-  const sources = [];
-  for (let rowIndex = 1; rowIndex < values.length; rowIndex += 1) {
-    const row = values[rowIndex] || [];
-    const name = asText(row[0]);
-    const sourceUrl = asText(row[1]);
-    if (!name || !/^https?:\/\//i.test(sourceUrl)) {
-      continue;
-    }
-    const hostname = hostnameFromUrl(sourceUrl);
-    if (!hostname) {
-      continue;
-    }
-    sources.push({
-      sourceRow: rowIndex + 1,
-      name,
-      sourceUrl,
-      hostname,
-      region: asText(row[4]),
-      county: asText(row[5]),
-      city: asText(row[6]),
-    });
-  }
-
-  const grouped = new Map();
-  for (const source of sources) {
-    const key = source.hostname;
-    if (!grouped.has(key)) {
-      grouped.set(key, {
-        ...source,
-        aliases: [],
-        regions: [],
-        counties: [],
-        cities: [],
-        sourceRows: [],
-      });
-    }
-    const record = grouped.get(key);
-    record.aliases.push(source.name);
-    if (source.region) record.regions.push(source.region);
-    if (source.county) record.counties.push(source.county);
-    if (source.city) record.cities.push(source.city);
-    record.sourceRows.push(source.sourceRow);
-  }
-  return [...grouped.values()].map((source) => ({
-    ...source,
-    aliases: [...new Set(source.aliases)],
-    regions: [...new Set(source.regions)],
-    counties: [...new Set(source.counties)],
-    cities: [...new Set(source.cities)],
-  }));
 }
 
 const developmentSchema = {
@@ -1152,7 +1092,7 @@ async function main() {
   const pdfDirectory = path.join(runDirectory, "pdf");
   await fs.mkdir(runDirectory, { recursive: true });
 
-  let sources = await readPublicationSources(workbookPath);
+  let sources = await readPublicationSourcesStandalone(workbookPath);
   if (argumentsObject.site) {
     const siteFilter = argumentsObject.site.toLowerCase();
     sources = sources.filter((source) =>
@@ -1263,7 +1203,7 @@ async function main() {
     Boolean(config.downloadPlanPdfs) && !argumentsObject.dryRun,
     browserCookies,
   );
-  const workbook = await buildWorkbook({
+  const workbook = await buildWorkbookStandalone({
     window,
     config,
     sources,
@@ -1277,27 +1217,11 @@ async function main() {
       : "API web search",
   });
 
-  const previewDirectory = path.join(runDirectory, "preview");
-  await fs.mkdir(previewDirectory, { recursive: true });
-  for (const sheet of workbook.worksheets.items) {
-    const preview = await workbook.render({
-      sheetName: sheet.name,
-      autoCrop: "all",
-      scale: 1,
-      format: "png",
-    });
-    await fs.writeFile(
-      path.join(previewDirectory, `${safeFilenamePart(sheet.name, "Sheet")}.png`),
-      new Uint8Array(await preview.arrayBuffer()),
-    );
-  }
-
   const reportPath = path.join(
     runDirectory,
     `Development Research ${window.start} to ${window.end}.xlsx`,
   );
-  const output = await SpreadsheetFile.exportXlsx(workbook);
-  await output.save(reportPath);
+  await workbook.xlsx.writeFile(reportPath);
   await saveRunMetadata(runDirectory, {
     generatedAt: new Date().toISOString(),
     window,
@@ -1314,7 +1238,6 @@ async function main() {
 
   console.log(`Report created: ${reportPath}`);
   console.log(`Plan PDF folder: ${pdfDirectory}`);
-  console.log(`Preview folder: ${previewDirectory}`);
 }
 
 main().catch((error) => {

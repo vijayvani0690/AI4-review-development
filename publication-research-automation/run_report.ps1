@@ -15,19 +15,18 @@ param(
 
 $ErrorActionPreference = "Stop"
 $scriptDirectory = Split-Path -Parent $MyInvocation.MyCommand.Path
-$runtimeRoot = Join-Path $env:USERPROFILE ".cache\codex-runtimes\codex-primary-runtime\dependencies\node"
-$bundledNode = Join-Path $runtimeRoot "bin\node.exe"
-$bundledModules = Join-Path $runtimeRoot "node_modules"
-$localModules = Join-Path $scriptDirectory "node_modules"
-
-if (-not (Test-Path -LiteralPath $bundledNode)) {
-    throw "Bundled Node.js was not found at $bundledNode. Open this folder in Codex once, or update `$bundledNode in run_report.ps1."
+$node = Get-Command node.exe -ErrorAction SilentlyContinue
+if (-not $node) {
+    throw "Node.js 20 or newer is required. Install Node.js from https://nodejs.org/ and run setup.ps1."
 }
-if (-not (Test-Path -LiteralPath $bundledModules)) {
-    throw "Bundled Node.js modules were not found at $bundledModules."
+$majorVersion = [int]((& $node.Source --version).TrimStart("v").Split(".")[0])
+if ($majorVersion -lt 20) {
+    throw "Node.js 20 or newer is required. Installed version: $(& $node.Source --version)"
 }
-if (-not (Test-Path -LiteralPath $localModules)) {
-    New-Item -ItemType Junction -Path $localModules -Target $bundledModules | Out-Null
+$excelJs = Join-Path $scriptDirectory "node_modules\exceljs"
+$playwright = Join-Path $scriptDirectory "node_modules\playwright"
+if (-not (Test-Path -LiteralPath $excelJs) -or -not (Test-Path -LiteralPath $playwright)) {
+    throw "Standalone dependencies are missing. Run: powershell -ExecutionPolicy Bypass -File .\setup.ps1"
 }
 
 $arguments = @(
@@ -63,7 +62,7 @@ if ($LoginSetup) {
     $arguments += "--login-setup"
 }
 
-& $bundledNode @arguments
+& $node.Source @arguments
 if ($LASTEXITCODE -ne 0) {
     exit $LASTEXITCODE
 }

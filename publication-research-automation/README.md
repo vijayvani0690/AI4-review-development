@@ -1,6 +1,8 @@
 # Publication Development Research Automation
 
-This folder contains a repeatable weekly/monthly pipeline for the publication list in `input/Publications for AI Search.xlsx`.
+This is a standalone Windows/Node.js weekly/monthly pipeline for the publication
+list in `input/Publications for AI Search.xlsx`. Codex is not required to install
+or run it.
 
 For complete operating instructions, see
 [`STEP_BY_STEP_GUIDE.md`](STEP_BY_STEP_GUIDE.md).
@@ -18,11 +20,28 @@ The script:
 
 ## One-time setup
 
-1. Put the current publication workbook at:
+1. Install the current Node.js LTS release (Node.js 20 or newer) from
+   [nodejs.org](https://nodejs.org/).
+
+2. From PowerShell in this folder, install the local dependencies:
+
+   ```powershell
+   powershell -ExecutionPolicy Bypass -File .\setup.ps1
+   ```
+
+   This installs dependencies into a local `node_modules` folder. Do not copy or
+   commit that folder; another computer should run `setup.ps1` for itself.
+
+   npm may report advisories in ExcelJS archive/globbing dependencies. This
+   application only processes the trusted workbook you place in `input`. Do not
+   use untrusted workbooks or run `npm audit fix --force`, which currently
+   proposes an older breaking ExcelJS version.
+
+3. Put the current publication workbook at:
 
    `input/Publications for AI Search.xlsx`
 
-2. Set your OpenAI API key in the PowerShell session that will run the report:
+4. Set your OpenAI API key in the PowerShell session that will run the report:
 
    ```powershell
    $env:OPENAI_API_KEY = [System.Net.NetworkCredential]::new(
@@ -33,7 +52,7 @@ The script:
 
    Do not put the key in the workbook, source code, or a committed file.
 
-3. Review `config.json`. The default model is `gpt-5.6-terra`, which balances research quality and cost. You can change it to `gpt-5.6-sol` for maximum capability or `gpt-5.6-luna` for lower-cost, high-volume runs.
+5. Review `config.json`. The default model is `gpt-5.6-terra`, which balances research quality and cost. You can change it to `gpt-5.6-sol` for maximum capability or `gpt-5.6-luna` for lower-cost, high-volume runs.
 
 ## Run weekly
 
@@ -155,7 +174,6 @@ runs/
     Development Research 2026-07-22 to 2026-07-28.xlsx
     run-metadata.json
     pdf/
-    preview/
 ```
 
 `Source Audit` always includes every distinct website processed, including blocked sites, inactive/archived sites, duplicates, errors, and sites with no qualifying result.
@@ -182,7 +200,8 @@ For unattended scheduling, store `OPENAI_API_KEY` in a secure user-level secret 
 - Browser mode uses only content your normal browser session is authorized to
   display. It does not bypass paywalls, robots enforcement, CAPTCHA, multifactor
   authentication, or other access controls.
-- The workflow relies on public web search. It does not sign in to publication accounts.
+- Browser discovery stays within each publication website. Saved authorized
+  sessions are reused, but the automation does not bypass access controls.
 - Cross streets and plan links remain blank when no reliable source provides them.
 - Some sites block automated PDF downloads even when the PDF is visible in search. Those failures remain in `PDF Index` with the source URL so they can be downloaded manually.
 - Web research and tool calls incur OpenAI API usage charges. Reduce `concurrency`, use a shorter date window, or select `gpt-5.6-luna` if cost is a concern.

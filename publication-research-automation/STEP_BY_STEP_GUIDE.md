@@ -4,6 +4,30 @@ This guide explains how to run the publication development report in Microsoft
 Edge using saved website logins. Website discovery stays within each
 publication's own domain; the automation does not search Google or Bing.
 
+Codex is not required. The standalone application requires Windows, Microsoft
+Edge, Node.js 20 or newer, and an OpenAI API key.
+
+## 0. Install the standalone application
+
+1. Install the current Node.js LTS release from:
+
+   ```text
+   https://nodejs.org/
+   ```
+
+2. Clone or copy the repository to the computer.
+3. Open PowerShell in `publication-research-automation`.
+4. Run:
+
+   ```powershell
+   powershell -ExecutionPolicy Bypass -File .\setup.ps1
+   ```
+
+5. Wait for `Standalone setup complete`.
+
+Each computer runs this setup once. Do not copy `node_modules` between
+computers; it is rebuilt locally from `package-lock.json`.
+
 ## 1. Open PowerShell
 
 Open Windows PowerShell and change to the automation folder:
@@ -239,7 +263,6 @@ runs\
     Development Research 2026-07-24 to 2026-07-30.xlsx
     run-metadata.json
     pdf\
-    preview\
 ```
 
 Open the Excel workbook and review:
