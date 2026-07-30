@@ -1,0 +1,30 @@
+{
+  "inputWorkbook": "input/Publications for AI Search.xlsx",
+  "outputRoot": "runs",
+  "model": "gpt-5.6-terra",
+  "reasoningEffort": "medium",
+  "concurrency": 3,
+  "downloadPlanPdfs": true,
+  "requestTimeoutMinutes": 5,
+  "browser": {
+    "channel": "msedge",
+    "profileDirectory": "browser-profile",
+    "maximumCandidatesPerSite": 10,
+    "maximumSitemapsPerSite": 8,
+    "maximumArticleCharacters": 45000,
+    "maximumEvidenceCharactersPerSite": 180000,
+    "navigationTimeoutMilliseconds": 30000,
+    "pageSettleMilliseconds": 2500,
+    "searchMinimumWaitMilliseconds": 5000,
+    "searchResultsWaitMilliseconds": 12000
+  },
+  "researchScope": "California projects, plus national announcements when the reported development is in California.",
+  "qualifyingTypes": [
+    "demolition",
+    "new_retail_building",
+    "new_restaurant_building",
+    "retail_center",
+    "residential",
+    "mixed_use"
+  ]
+}

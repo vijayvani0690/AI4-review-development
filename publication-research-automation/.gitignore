@@ -1,0 +1,6 @@
+runs/
+node_modules/
+input/*.xlsx
+browser-profile/
+.env
+*.log
