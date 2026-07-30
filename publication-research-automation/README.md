@@ -7,6 +7,12 @@ or run it.
 For complete operating instructions, see
 [`STEP_BY_STEP_GUIDE.md`](STEP_BY_STEP_GUIDE.md).
 
+To maintain or modify the project with ChatGPT, Claude, Gemini, Copilot, or
+another coding assistant, give it
+[`AI_ASSISTANT_GUIDE.md`](AI_ASSISTANT_GUIDE.md). The guide includes a
+copy-and-paste starting prompt, architecture, required behavior, test commands,
+and instructions for adding another runtime AI provider.
+
 The script:
 
 - reads publication name, URL, region, county, and city from the workbook;
